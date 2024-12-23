@@ -10,18 +10,22 @@ contract LoanRequest {
         uint256 amount;
         uint256 repaymentPeriod;
         bool approved;
+        string cid; // IPFS CID for loan-related documents
     }
 
     uint256 public nonce;
+
     constructor() {
         nonce = 0;
     }
+
     mapping(address => Loan[]) farmerLoans;
     mapping(bytes32 => Loan) loanMapIdToLoanAddress;
     mapping(address => Loan[]) lenderLoans;
     Loan[] public loanRequests;
 
     fallback() external payable {}
+
     function supportsInterface(
         bytes4 interfaceID
     ) external pure returns (bool) {
@@ -37,7 +41,12 @@ contract LoanRequest {
         return "ETH"; // Replace with your token symbol
     }
 
-    function requestLoan(uint256 _amount, uint256 _repaymentPeriod) public {
+    // Updated requestLoan function to accept and store CID
+    function requestLoan(
+        uint256 _amount,
+        uint256 _repaymentPeriod,
+        string memory _cid // New parameter to accept the IPFS CID
+    ) public {
         bytes32 uniqueId = keccak256(
             abi.encodePacked(msg.sender, block.timestamp, nonce)
         );
@@ -48,8 +57,10 @@ contract LoanRequest {
             lender: address(0),
             amount: _amount,
             repaymentPeriod: _repaymentPeriod,
-            approved: false
+            approved: false,
+            cid: _cid // Store the CID for this loan
         });
+
         loanMapIdToLoanAddress[uniqueId] = newLoan;
         farmerLoans[msg.sender].push(newLoan);
         loanRequests.push(newLoan);
@@ -60,6 +71,7 @@ contract LoanRequest {
         return loanRequests;
     }
 
+    // Updated disburseLoan function to handle CID
     function disburseLoan(
         bytes32 _id,
         address payable _farmerAddress
@@ -78,8 +90,7 @@ contract LoanRequest {
             }
         }
 
-        console.log("came here");
-        // Optionally, you can handle the case where the loan wasn't found
+
         require(loanFound, "Loan not found for farmer");
 
         // Update the loan request
@@ -101,6 +112,7 @@ contract LoanRequest {
         return lenderLoans[_lender];
     }
 
+    // Updated approveLoan to handle CID (CID remains unchanged, but it’s part of the loan struct)
     function approveLoan(bytes32 _loanID) public {
         // Check if the loan exists
         Loan storage loanToApprove = loanMapIdToLoanAddress[_loanID];
@@ -127,6 +139,7 @@ contract LoanRequest {
         }
     }
 
+    // Updated deleteLoan to handle CID (CID remains unchanged)
     function deleteLoan(bytes32 _loanID) public {
         // Check if the loan exists
         Loan memory loanToDelete = loanMapIdToLoanAddress[_loanID];
@@ -136,9 +149,7 @@ contract LoanRequest {
         Loan[] storage farmerLoansArray = farmerLoans[loanToDelete.farmer];
         for (uint256 i = 0; i < farmerLoansArray.length; i++) {
             if (farmerLoansArray[i].id == _loanID) {
-                farmerLoansArray[i] = farmerLoansArray[
-                    farmerLoansArray.length - 1
-                ]; // Move the last element to the current index
+                farmerLoansArray[i] = farmerLoansArray[farmerLoansArray.length - 1]; // Move the last element to the current index
                 farmerLoansArray.pop(); // Remove the last element
                 break;
             }
