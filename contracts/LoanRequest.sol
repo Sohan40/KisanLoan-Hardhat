@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 import "hardhat/console.sol";
 
 contract LoanRequest {
+    address public verifier;
     struct Loan {
         bytes32 id;
         address farmer;
@@ -17,6 +18,7 @@ contract LoanRequest {
 
     constructor() {
         nonce = 0;
+        verifier = 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720;
     }
 
     mapping(address => Loan[]) farmerLoans;
@@ -39,6 +41,11 @@ contract LoanRequest {
 
     function symbol() external pure returns (string memory) {
         return "ETH"; // Replace with your token symbol
+    }
+
+
+    function isVerifier(address _address) public view returns (bool) {
+        return _address == verifier;
     }
 
     // Updated requestLoan function to accept and store CID
