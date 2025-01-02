@@ -84,7 +84,7 @@ contract LoanRequest {
         address payable _farmerAddress
     ) public payable {
         require(msg.value > 0, "Must send Ether"); // Ensure some Ether is sent
-
+        
         // Find the loan in farmerLoans
         bool loanFound = false;
         for (uint i = 0; i < farmerLoans[_farmerAddress].length; i++) {
