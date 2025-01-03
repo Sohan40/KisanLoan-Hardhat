@@ -77,7 +77,9 @@ contract LoanRequest {
     function getLoans() public view returns (Loan[] memory) {
         return loanRequests;
     }
-
+    function getFarmerLoans() public view returns (Loan [] memory){
+        return farmerLoans[msg.sender];
+    }
     // Updated disburseLoan function to handle CID
     function disburseLoan(
         bytes32 _id,
