@@ -88,6 +88,10 @@ contract LoanRequest {
         return loanRequests;
     }
 
+    function getLoanWithId(bytes32 _loanId) public view returns (Loan memory){
+        return loanMapIdToLoanAddress[_loanId];
+    }
+
     function getFarmerLoans() public view returns (Loan [] memory){
         console.log(msg.sender);
         return farmerLoans[msg.sender];
@@ -158,7 +162,7 @@ contract LoanRequest {
 
         Loan storage loanToApprove = loanMapIdToLoanAddress[_id];
         require(loanToApprove.farmer != address(0), "Loan does not exist");
-
+        loanToApprove.lender = msg.sender; // Set lender
         loanToApprove.emi = emiamount;
         loanToApprove.sanctioned = true;
 
@@ -228,18 +232,22 @@ contract LoanRequest {
         }
     }
 
-    function payEmi(bytes32 loanId) public payable {
+    function payEmi(bytes32 loanId,address payable _lenderAddress) public payable {
+
         Loan storage loan = loanMapIdToLoanAddress[loanId];
+        console.log(loan.farmer);
 
         // Validate loan existence
         require(loan.farmer != address(0), "Loan does not exist");
         require(loan.farmer == msg.sender, "Only the farmer can pay the EMI");
         require(loan.sanctioned, "Loan is not sanctioned");
         require(loan.approved, "Loan is not approved");
+        // require(address(this).balance >= loan.emi, "Contract has insufficient funds");
+
         // require(msg.value == loan.emi, "Incorrect EMI amount");
 
         // Transfer EMI to lender
-        (bool success, ) = loan.lender.call{value: loan.emi}("");
+        (bool success, ) = _lenderAddress.call{value: msg.value}("");
         require(success, "EMI transfer to lender failed");
 
         // Update emiPaidCount in the loanMapIdToLoanAddress
